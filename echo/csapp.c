@@ -534,14 +534,19 @@ size_t Fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 	size_t n;
 
 	if (((n = fread(ptr, size, nmemb, stream)) < nmemb) && ferror(stream))
+	{
 		unix_error("Fread error");
+	}
+
 	return n;
 }
 
 void Fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
 	if (fwrite(ptr, size, nmemb, stream) < nmemb)
+	{
 		unix_error("Fwrite error");
+	}
 }
 
 /****************************
@@ -553,7 +558,10 @@ int Socket(int domain, int type, int protocol)
 	int rc;
 
 	if ((rc = socket(domain, type, protocol)) < 0)
+	{
 		unix_error("Socket error");
+	}
+
 	return rc;
 }
 
@@ -562,7 +570,9 @@ void Setsockopt(int s, int level, int optname, const void *optval, int optlen)
 	int rc;
 
 	if ((rc = setsockopt(s, level, optname, optval, optlen)) < 0)
+	{
 		unix_error("Setsockopt error");
+	}
 }
 
 void Bind(int sockfd, struct sockaddr *my_addr, int addrlen)
@@ -570,7 +580,9 @@ void Bind(int sockfd, struct sockaddr *my_addr, int addrlen)
 	int rc;
 
 	if ((rc = bind(sockfd, my_addr, addrlen)) < 0)
+	{
 		unix_error("Bind error");
+	}
 }
 
 void Listen(int s, int backlog)
@@ -578,7 +590,9 @@ void Listen(int s, int backlog)
 	int rc;
 
 	if ((rc = listen(s, backlog)) < 0)
+	{
 		unix_error("Listen error");
+	}
 }
 
 int Accept(int s, struct sockaddr *addr, socklen_t *addrlen)
@@ -586,7 +600,10 @@ int Accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 	int rc;
 
 	if ((rc = accept(s, addr, addrlen)) < 0)
+	{
 		unix_error("Accept error");
+	}
+
 	return rc;
 }
 
@@ -595,7 +612,9 @@ void Connect(int sockfd, struct sockaddr *serv_addr, int addrlen)
 	int rc;
 
 	if ((rc = connect(sockfd, serv_addr, addrlen)) < 0)
+	{
 		unix_error("Connect error");
+	}
 }
 
 /*******************************
@@ -608,7 +627,9 @@ void Getaddrinfo(const char *node, const char *service,
 	int rc;
 
 	if ((rc = getaddrinfo(node, service, hints, res)) != 0)
+	{
 		csapp_gai_error(rc, "Getaddrinfo error");
+	}
 }
 /* $end getaddrinfo */
 
@@ -617,9 +638,10 @@ void Getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host,
 {
 	int rc;
 
-	if ((rc = getnameinfo(sa, salen, host, hostlen, serv,
-												servlen, flags)) != 0)
+	if ((rc = getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)) != 0)
+	{
 		csapp_gai_error(rc, "Getnameinfo error");
+	}
 }
 
 void Freeaddrinfo(struct addrinfo *res)
@@ -630,7 +652,9 @@ void Freeaddrinfo(struct addrinfo *res)
 void Inet_ntop(int af, const void *src, char *dst, socklen_t size)
 {
 	if (!inet_ntop(af, src, dst, size))
+	{
 		unix_error("Inet_ntop error");
+	}
 }
 
 void Inet_pton(int af, const char *src, void *dst)
@@ -639,9 +663,13 @@ void Inet_pton(int af, const char *src, void *dst)
 
 	rc = inet_pton(af, src, dst);
 	if (rc == 0)
+	{
 		app_error("inet_pton error: invalid dotted-decimal address");
+	}
 	else if (rc < 0)
+	{
 		unix_error("Inet_pton error");
+	}
 }
 
 /*******************************************
