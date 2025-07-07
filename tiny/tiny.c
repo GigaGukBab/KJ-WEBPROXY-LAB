@@ -9,13 +9,64 @@
 #include "csapp.h"
 
 void doit(int fd);
+void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg);
 void read_requesthdrs(rio_t *rp);
 int parse_uri(char *uri, char *filename, char *cgiargs);
 void serve_static(int fd, char *filename, int filesize);
 void get_filetype(char *filename, char *filetype);
 void serve_dynamic(int fd, char *filename, char *cgiargs);
-void clienterror(int fd, char *cause, char *errnum, char *shortmsg,
-                 char *longmsg);
+/* This function handle one HTTP transaction */
+void doit(int fd)
+{
+  int is_static;
+  struct stat sbuf;
+  char buf[MAXLINE], method[MAXLINE], uri[MAXLINE],
+      version[MAXLINE], filename[MAXLINE], cgiargs[MAXLINE];
+  rio_t rio;
+
+  /* Read request line and headers */
+  Rio_readinitb(&rio, fd);
+  rio_readlineb(&rio, buf, MAXLINE);
+  printf("Request headers:\n");
+  printf("%s", buf);
+  sscanf(buf, "%s %s %s", method, uri, version);
+  if (strcasecmp(method, "GET"))
+  {
+    clienterror(fd, method, "501", "Not implemented", "Tiny does not implement this method");
+    return;
+  }
+  read_requesthdrs(&rio);
+
+  /* Parse URI from GET request */
+  is_static = parse_uri(uri, filename, cgiargs);
+
+  if (stat(filename, &sbuf) < 0)
+  {
+    clienterror(fd, filename, "404", "Not found", "Tiny couldn't find this file");
+    return;
+  }
+
+  if (is_static)
+  {
+    /* Serve static content */
+    if (!S_ISREG(sbuf.st_mode) || !(S_IRUSR & sbuf.st_mode))
+    {
+      clienterror(fd, filename, "403", "Forbidden", "Tiny couldn't read the file");
+      return;
+    }
+    serve_static(fd, filename, sbuf.st_size);
+  }
+  else
+  {
+    /* Serve dynamic content */
+    if (!S_ISREG(sbuf.st_mode) || !(S_IXUSR & sbuf.st_mode))
+    {
+      clienterror(fd, filename, "403", "Forbidden", "Tiny couldn't run the CGI program");
+      return;
+    }
+    serve_dynamic(fd, filename, cgiargs);
+  }
+}
 
 int main(int argc, char **argv)
 {
@@ -31,14 +82,13 @@ int main(int argc, char **argv)
     exit(1);
   }
 
+  // open listening socket
   listenfd = Open_listenfd(argv[1]);
   while (1)
   {
     clientlen = sizeof(clientaddr);
-    connfd = Accept(listenfd, (SA *)&clientaddr,
-                    &clientlen); // line:netp:tiny:accept
-    Getnameinfo((SA *)&clientaddr, clientlen, hostname, MAXLINE, port, MAXLINE,
-                0);
+    connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen); // line:netp:tiny:accept
+    Getnameinfo((SA *)&clientaddr, clientlen, hostname, MAXLINE, port, MAXLINE, 0);
     printf("Accepted connection from (%s, %s)\n", hostname, port);
     doit(connfd);  // line:netp:tiny:doit
     Close(connfd); // line:netp:tiny:close
