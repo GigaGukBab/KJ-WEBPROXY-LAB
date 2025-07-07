@@ -15,6 +15,32 @@ int parse_uri(char *uri, char *filename, char *cgiargs);
 void serve_static(int fd, char *filename, int filesize);
 void get_filetype(char *filename, char *filetype);
 void serve_dynamic(int fd, char *filename, char *cgiargs);
+
+/* get_filetype function derive file type from filename */
+void get_filetype(char *filename, char *filetype)
+{
+  if (strstr(filename, ".html"))
+  {
+    strcpy(filetype, "text/html");
+  }
+  else if (strstr(filename, ".gif"))
+  {
+    strcpy(filetype, "image/gif");
+  }
+  else if (strstr(filename, ".png"))
+  {
+    strcpy(filetype, "image/png");
+  }
+  else if (strstr(filename, ".jpg"))
+  {
+    strcpy(filetype, "image/jpeg");
+  }
+  else
+  {
+    strcpy(filetype, "text/plain");
+  }
+}
+
 /* serve_static function serves static content to a client */
 void serve_static(int fd, char *filename, int filesize)
 {
