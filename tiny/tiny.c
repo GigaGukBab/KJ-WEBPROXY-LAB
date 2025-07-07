@@ -15,6 +15,21 @@ int parse_uri(char *uri, char *filename, char *cgiargs);
 void serve_static(int fd, char *filename, int filesize);
 void get_filetype(char *filename, char *filetype);
 void serve_dynamic(int fd, char *filename, char *cgiargs);
+/* read_requesthdrs function reads and ignore request headers */
+void read_requesthdrs(rio_t *rp)
+{
+  char buf[MAXLINE];
+
+  Rio_readlineb(rp, buf, MAXLINE);
+
+  while (strcmp(buf, "\r\n"))
+  {
+    Rio_readlineb(rp, buf, MAXLINE);
+    printf("%s", buf);
+  }
+
+  return;
+}
 
 /* clienterror functuon sends an error message to client */
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg)
