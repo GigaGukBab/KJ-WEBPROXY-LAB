@@ -22,7 +22,7 @@ int main(void)
   }
 
   /* Make the response body */
-  sprintf(content, "QUERY_STRING=%s\r\n<p>", buf);
+  sprintf(content, "QUERY_STRING=%s&%s\r\n<p>", arg1, arg2);
   sprintf(content + strlen(content), "Welcome to add.com: ");
   sprintf(content + strlen(content), "THE Internet addition portal.\r\n<p>");
   sprintf(content + strlen(content), "The answer is: %d + %d = %d\r\n<p>",
