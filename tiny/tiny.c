@@ -164,6 +164,8 @@ void serve_static(int fd, char *filename, int filesize)
   int n;
   int remaining = sizeof(buf);
 
+  char *file_p = NULL;
+
   /* Send response headers to client */
   get_filetype(filename, filetype);
 
@@ -194,10 +196,18 @@ void serve_static(int fd, char *filename, int filesize)
 
   /* Send response body to client */
   srcfd = Open(filename, O_RDONLY, 0);
-  srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
+  file_p = (char *)malloc(filesize);
+  ssize_t read_bytes = Rio_readn(srcfd, file_p, filesize);
   Close(srcfd);
-  Rio_writen(fd, srcp, filesize);
-  Munmap(srcp, filesize);
+  Rio_writen(fd, file_p, read_bytes);
+  free(file_p);
+
+  // /* Send response body to client */
+  // srcfd = Open(filename, O_RDONLY, 0);
+  // srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
+  // Close(srcfd);
+  // Rio_writen(fd, srcp, filesize);
+  // Munmap(srcp, filesize);
 }
 
 /*
