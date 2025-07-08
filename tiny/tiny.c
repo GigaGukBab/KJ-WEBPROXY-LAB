@@ -186,7 +186,23 @@ void serve_static(int fd, char *filename, int filesize)
   p += n;
   remaining -= n;
 
-  n = snprintf(p, remaining, "Content-type: %s\r\n\r\n", filetype);
+  n = snprintf(p, remaining, "Content-type: %s\r\n", filetype);
+  p += n;
+  remaining -= n;
+
+  // if (strcmp(filetype, "video/mp4") == 0)
+  // {
+  //   n = snprintf(p, remaining, "Content-Range: bytes %d-%d/%d\r\n", 0, 1, filesize);
+  //   p += n;
+  //   remaining -= n;
+
+  //   n = snprintf(p, remaining, "Accept-Ranges: bytes\r\n");
+  //   p += n;
+  //   remaining -= n;
+  // }
+
+  // 모든 헤더 작성이 끝난 후, 헤더 블록의 끝을 알리는 빈 줄(\r\n)을 추가
+  n = snprintf(p, remaining, "\r\n");
   p += n;
   remaining -= n;
 
