@@ -11,9 +11,9 @@
 void doit(int fd);
 void read_requesthdrs(rio_t *rp);
 int parse_uri(char *uri, char *filename, char *cgiargs);
-void serve_static(int fd, char *filename, int filesize);
+void serve_static(int fd, char *filename, int filesize, char *method);
 void get_filetype(char *filename, char *filetype);
-void serve_dynamic(int fd, char *filename, char *cgiargs);
+void serve_dynamic(int fd, char *filename, char *cgiargs, char *method);
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg,
                  char *longmsg);
 
@@ -62,7 +62,7 @@ void doit(int fd)
     return;
   printf("%s", buf);
   sscanf(buf, "%s %s %s", method, uri, version);
-  if (strcasecmp(method, "GET"))
+  if (strcasecmp(method, "GET") && strcasecmp(method, "HEAD"))
   {
     clienterror(fd, method, "501", "Not Implemented",
                 "Tiny does not implement this method");
@@ -87,7 +87,7 @@ void doit(int fd)
                   "Tiny couldn't read the file");
       return;
     }
-    serve_static(fd, filename, sbuf.st_size);
+    serve_static(fd, filename, sbuf.st_size, method);
   }
   else
   { /* Serve dynamic content */
@@ -97,12 +97,13 @@ void doit(int fd)
                   "Tiny couldn't run the CGI program");
       return;
     }
-    serve_dynamic(fd, filename, cgiargs);
+    serve_dynamic(fd, filename, cgiargs, method);
   }
 }
 
 /*
  * read_requesthdrs - read HTTP request headers
+ * By using this function, we ignore header information.
  */
 void read_requesthdrs(rio_t *rp)
 {
@@ -154,7 +155,7 @@ int parse_uri(char *uri, char *filename, char *cgiargs)
 /*
  * serve_static - copy a file back to the client
  */
-void serve_static(int fd, char *filename, int filesize)
+void serve_static(int fd, char *filename, int filesize, char *method)
 {
   int srcfd;
   char *srcp, filetype[MAXLINE];
@@ -210,20 +211,27 @@ void serve_static(int fd, char *filename, int filesize)
   printf("Response headers:\n");
   printf("%s", buf);
 
-  /* Send response body to client */
-  srcfd = Open(filename, O_RDONLY, 0);
-  file_p = (char *)malloc(filesize);
-  ssize_t read_bytes = Rio_readn(srcfd, file_p, filesize);
-  Close(srcfd);
-  Rio_writen(fd, file_p, read_bytes);
-  free(file_p);
+  if (strcasecmp(method, "GET") == 0)
+  {
+    /* Send response body to client */
+    srcfd = Open(filename, O_RDONLY, 0);
+    file_p = (char *)malloc(filesize);
+    ssize_t read_bytes = Rio_readn(srcfd, file_p, filesize);
+    Close(srcfd);
+    Rio_writen(fd, file_p, read_bytes);
+    free(file_p);
 
-  // /* Send response body to client */
-  // srcfd = Open(filename, O_RDONLY, 0);
-  // srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
-  // Close(srcfd);
-  // Rio_writen(fd, srcp, filesize);
-  // Munmap(srcp, filesize);
+    // /* Send response body to client */
+    // srcfd = Open(filename, O_RDONLY, 0);
+    // srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
+    // Close(srcfd);
+    // Rio_writen(fd, srcp, filesize);
+    // Munmap(srcp, filesize);
+  }
+  else if (strcasecmp(method, "HEAD") == 0)
+  {
+    return;
+  }
 }
 
 /*
@@ -248,7 +256,7 @@ void get_filetype(char *filename, char *filetype)
 /*
  * serve_dynamic - run a CGI program on behalf of the client
  */
-void serve_dynamic(int fd, char *filename, char *cgiargs)
+void serve_dynamic(int fd, char *filename, char *cgiargs, char *method)
 {
   char buf[MAXLINE], *emptylist[] = {NULL};
   pid_t pid;
@@ -270,6 +278,7 @@ void serve_dynamic(int fd, char *filename, char *cgiargs)
   { /* Child process */
     /* Real server would set all CGI vars here */
     setenv("QUERY_STRING", cgiargs, 1);
+    setenv("METHOD_TYPE", method, 1);
 
     /* Redirect stdout to client */
     if (Dup2(fd, STDOUT_FILENO) < 0)

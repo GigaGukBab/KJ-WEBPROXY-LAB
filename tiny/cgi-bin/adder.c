@@ -6,9 +6,12 @@
 
 int main(void)
 {
-  char *buf, *p;
+  char *buf, *p, *method_type;
   char arg1[MAXLINE], arg2[MAXLINE], content[MAXLINE];
   int n1 = 0, n2 = 0;
+
+  /* Extract the method type */
+  method_type = getenv("METHOD_TYPE");
 
   /* Extract the two arguments */
   if ((buf = getenv("QUERY_STRING")) != NULL)
@@ -33,6 +36,12 @@ int main(void)
   printf("Content-type: text/html\r\n");
   printf("Content-length: %d\r\n", (int)strlen(content));
   printf("\r\n");
+  if (strcasecmp(method_type, "HEAD") == 0)
+  {
+    fflush(stdout);
+
+    exit(0);
+  }
   printf("%s", content);
   fflush(stdout);
 
