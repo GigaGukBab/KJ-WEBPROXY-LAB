@@ -192,9 +192,9 @@ void serve_static(int fd, char *filename, int filesize)
 
   // if (strcmp(filetype, "video/mp4") == 0)
   // {
-  //   n = snprintf(p, remaining, "Content-Range: bytes %d-%d/%d\r\n", 0, 1, filesize);
-  //   p += n;
-  //   remaining -= n;
+  //   // n = snprintf(p, remaining, "Content-Range: bytes %d-%d/%d\r\n", 0, 1, filesize);
+  //   // p += n;
+  //   // remaining -= n;
 
   //   n = snprintf(p, remaining, "Accept-Ranges: bytes\r\n");
   //   p += n;
